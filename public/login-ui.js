@@ -24,7 +24,7 @@
     const deviceId = localStorage.getItem('htap_device') || crypto.randomUUID();
     localStorage.setItem('htap_device', deviceId);
 
-    const res = await fetch('https://your-render-url.onrender.com/api/login', {
+    const res = await fetch('https://hypertap.onrender.com/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, deviceId })
@@ -37,7 +37,7 @@
     }
 
     const script = document.createElement('script');
-    script.src = `https://your-render-url.onrender.com/secure/hypertap-core.js?username=${username}&deviceId=${deviceId}`;
+    script.src = `https://hypertap.onrender.com/secure/hypertap-core.js?username=${username}&deviceId=${deviceId}`;
     document.body.appendChild(script);
     box.remove();
   };
