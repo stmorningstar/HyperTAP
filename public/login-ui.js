@@ -1,35 +1,25 @@
 (async function () {
-  const existing = document.getElementById('hypertap-login-btn');
-  if (existing) return; // prevent duplicates
+  const username = 'user01'; // assign your user's ID here
+  const deviceId = localStorage.getItem('htap_device') || crypto.randomUUID();
+  localStorage.setItem('htap_device', deviceId);
+  localStorage.setItem('htap_username', username);
 
-  const btn = document.createElement('button');
-  btn.id = 'hypertap-login-btn';
-  btn.textContent = 'Click Here to Login HyperTAP by FY';
-  btn.style.position = 'fixed';
-  btn.style.top = '10px';
-  btn.style.left = '10px';
-  btn.style.zIndex = '9999';
-  btn.style.background = '#444';
-  btn.style.color = '#fff';
-  btn.style.border = 'none';
-  btn.style.padding = '8px 12px';
-  btn.style.borderRadius = '6px';
-  btn.style.fontSize = '13px';
-  btn.style.cursor = 'pointer';
-  btn.style.fontWeight = 'bold';
-  btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-
-  btn.addEventListener('click', () => {
-    const username = localStorage.getItem('htap_username') || 'anonymous';
-    const deviceId = localStorage.getItem('htap_device') || crypto.randomUUID();
-    localStorage.setItem('htap_device', deviceId);
-
-    const script = document.createElement('script');
-    script.src = `https://hypertap.onrender.com/secure/hypertap-core.js?username=${username}&deviceId=${deviceId}`;
-    document.body.appendChild(script);
-
-    btn.remove(); // optional: remove button after clicked
+  // Pre-auth request
+  const res = await fetch('https://hypertap.onrender.com/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password: 'placeholder', deviceId }) // password is dummy, actual login inside core
   });
 
-  document.body.appendChild(btn);
+  if (!res.ok) {
+    console.error('❌ Login pre-check failed');
+    return;
+  }
+
+  // Load core script WITHOUT query params
+  const script = document.createElement('script');
+  script.src = 'https://hypertap.onrender.com/secure/hypertap-core.js';
+  script.onload = () => console.log('✅ HyperTAP core loaded');
+  script.onerror = () => console.error('❌ Failed to load HyperTAP core');
+  document.body.appendChild(script);
 })();
