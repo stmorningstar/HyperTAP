@@ -9,7 +9,7 @@
 
 /*
   User Credentials:
-  - user01: Password: Kj#9mP$2vN!xQ5w
+  - testuser: Password: testing123
   - user02: Password: Zm!4xN$7qP#vR2t
   - user03: Password: Wq@8tY#3mK$9vN2
   - user04: Password: Xr$2nP#6vM@9kQw
@@ -46,7 +46,7 @@
 
     // Configuration
     const users = {
-        'user01': { password: 'Kj#9mP$2vN!xQ5w', subscriptionEnd: '2025-07-31' },
+        'testuser': { password: 'test123', subscriptionEnd: '2025-07-31' },
         'user02': { password: 'Zm!4xN$7qP#vR2t', subscriptionEnd: '2025-07-31' },
         'user03': { password: 'Wq@8tY#3mK$9vN2', subscriptionEnd: '2025-07-31' },
         'user04': { password: 'Xr$2nP#6vM@9kQw', subscriptionEnd: '2025-07-31' },
