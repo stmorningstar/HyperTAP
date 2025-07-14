@@ -10,8 +10,8 @@
 /*
   User Credentials:
   - testuser: Password: testing123
-  - user02: Password: Zm!4xN$7qP#vR2t
-  - user03: Password: Wq@8tY#3mK$9vN2
+  - firdaus: Password: administrator1993
+  - bala: Password: Wq@8tY#3mK$9vN2
   - user04: Password: Xr$2nP#6vM@9kQw
   - user05: Password: Lp#7mT$4xN!2vQw
   - user06: Password: Yt@3kM$8vN#2xQw
@@ -46,9 +46,9 @@
 
     // Configuration
     const users = {
-        'testuser': { password: 'test123', subscriptionEnd: '2025-07-31' },
-        'user02': { password: 'Zm!4xN$7qP#vR2t', subscriptionEnd: '2025-07-31' },
-        'user03': { password: 'Wq@8tY#3mK$9vN2', subscriptionEnd: '2025-07-31' },
+        'testuser': { password: 'testing123', subscriptionEnd: '2025-07-31' },
+        'firdaus': { password: 'administrator1993', subscriptionEnd: '2025-07-31' },
+        'bala': { password: 'Wq@8tY#3mK$9vN2', subscriptionEnd: '2025-07-31' },
         'user04': { password: 'Xr$2nP#6vM@9kQw', subscriptionEnd: '2025-07-31' },
         'user05': { password: 'Lp#7mT$4xN!2vQw', subscriptionEnd: '2025-07-31' },
         'user06': { password: 'Yt@3kM$8vN#2xQw', subscriptionEnd: '2025-07-31' },
