@@ -4,7 +4,7 @@ const path = require('path');
 
 const sessions = {};
 const USERS = {
-  user01: { password: 'Kj#9mP$2vN!xQ5w', expiry: '2025-07-31' }
+  testuser: { password: 'testing123', expiry: '2025-07-31' }
 };
 
 // Middleware to validate allowed source
