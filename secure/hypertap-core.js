@@ -89,9 +89,6 @@
     let currentView = 'home';
     let countdownInterval = null;
 
-    // Server API endpoint
-    const API_URL = 'http://localhost:3000/api';
-
     // Generate or retrieve device ID
     function getDeviceId() {
         if (!deviceId) {
@@ -108,11 +105,11 @@
     }
 
     // Check session validity
-    async function checkSession() {
+    function checkSession() {
         if (sessionToken && sessionStart && username && subscriptionEnd && deviceId) {
             const expectedToken = generateSessionToken(username, sessionStart);
             if (sessionToken !== expectedToken) {
-                await clearSession();
+                clearSession();
                 return false;
             }
             const startTime = new Date(parseInt(sessionStart));
@@ -125,59 +122,20 @@
                 subEnd >= now &&
                 subEnd.getMonth() + 1 === currentMonth &&
                 subEnd.getFullYear() === currentYear) {
-                // Verify session with server
-                try {
-                    const response = await new Promise((resolve, reject) => {
-                        GM_xmlhttpRequest({
-                            method: 'POST',
-                            url: `${API_URL}/login`,
-                            headers: { 'Content-Type': 'application/json' },
-                            data: JSON.stringify({ username, deviceId }),
-                            onload: (res) => resolve(JSON.parse(res.responseText)),
-                            onerror: (err) => reject(err)
-                        });
-                    });
-                    if (response.ok) {
-                        isAuthenticated = true;
-                        return true;
-                    } else {
-                        await clearSession();
-                        return false;
-                    }
-                } catch (e) {
-                    console.error('Session check failed:', e);
-                    await clearSession();
-                    return false;
-                }
+                isAuthenticated = true;
+                return true;
             }
         }
-        await clearSession();
+        clearSession();
         return false;
     }
 
     // Clear session data
-    async function clearSession() {
-        if (username && deviceId) {
-            try {
-                await new Promise((resolve, reject) => {
-                    GM_xmlhttpRequest({
-                        method: 'POST',
-                        url: `${API_URL}/logout`, // Assuming a new logout endpoint
-                        headers: { 'Content-Type': 'application/json' },
-                        data: JSON.stringify({ username, deviceId }),
-                        onload: () => resolve(),
-                        onerror: (err) => reject(err)
-                    });
-                });
-            } catch (e) {
-                console.error('Failed to clear session on server:', e);
-            }
-        }
+    function clearSession() {
         localStorage.removeItem('hypertap_token');
         localStorage.removeItem('hypertap_username');
         localStorage.removeItem('hypertap_session_start');
         localStorage.removeItem('hypertap_subscription_end');
-        localStorage.removeItem('hypertap_device_id');
         isAuthenticated = false;
         if (countdownInterval) {
             clearInterval(countdownInterval);
@@ -375,7 +333,7 @@
         errorMessage.style.display = 'none';
         loginContainer.appendChild(errorMessage);
 
-        loginButton.addEventListener('click', async () => {
+        loginButton.addEventListener('click', () => {
             const inputUsername = usernameInput.value.trim();
             const password = passwordInput.value.trim();
             if (!inputUsername || !password) {
@@ -407,44 +365,20 @@
                 return;
             }
 
-            // Check with server for existing session
-            try {
-                const response = await new Promise((resolve, reject) => {
-                    GM_xmlhttpRequest({
-                        method: 'POST',
-                        url: `${API_URL}/login`,
-                        headers: { 'Content-Type': 'application/json' },
-                        data: JSON.stringify({ username: inputUsername, deviceId: getDeviceId() }),
-                        onload: (res) => resolve(JSON.parse(res.responseText)),
-                        onerror: (err) => reject(err)
-                    });
-                });
-
-                if (!response.ok) {
-                    errorMessage.textContent = response.error || 'Login failed: User already logged in on another device';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                const timestamp = Date.now();
-                sessionToken = generateSessionToken(inputUsername, timestamp);
-                username = inputUsername;
-                subscriptionEnd = user.subscriptionEnd;
-                sessionStart = timestamp;
-                localStorage.setItem('hypertap_token', sessionToken);
-                localStorage.setItem('hypertap_username', username);
-                localStorage.setItem('hypertap_subscription_end', subscriptionEnd);
-                localStorage.setItem('hypertap_session_start', timestamp);
-                localStorage.setItem('hypertap_device_id', getDeviceId());
-                isAuthenticated = true;
-                currentView = 'home';
-                renderMainUI();
-                addClickEffect(loginButton);
-            } catch (e) {
-                errorMessage.textContent = 'Login failed: Server error';
-                errorMessage.style.display = 'block';
-                console.error('Login error:', e);
-            }
+            const timestamp = Date.now();
+            sessionToken = generateSessionToken(inputUsername, timestamp);
+            username = inputUsername;
+            subscriptionEnd = user.subscriptionEnd;
+            sessionStart = timestamp;
+            localStorage.setItem('hypertap_token', sessionToken);
+            localStorage.setItem('hypertap_username', username);
+            localStorage.setItem('hypertap_subscription_end', subscriptionEnd);
+            localStorage.setItem('hypertap_session_start', timestamp);
+            localStorage.setItem('hypertap_device_id', getDeviceId());
+            isAuthenticated = true;
+            currentView = 'home'; // Reset to home view on login
+            renderMainUI();
+            addClickEffect(loginButton);
         });
 
         layout.appendChild(loginContainer);
@@ -453,17 +387,20 @@
     // Render main UI
     function renderMainUI() {
         layout.innerHTML = '';
+        // Remove existing button container to prevent duplicates
         const existingButtonContainer = box.querySelector('div[style*="display: flex"][style*="background-color: #444"]');
         if (existingButtonContainer) {
             existingButtonContainer.remove();
         }
 
+        // Track focus
         document.addEventListener('focusin', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 lastFocusedElement = e.target;
             }
         });
 
+        // Bottom navigation
         const buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'flex';
         buttonContainer.style.width = '100%';
@@ -493,9 +430,9 @@
             currentView = 'info';
             renderView();
         });
-        const logoutButton = createNavButton('LOGOUT', async () => {
+        const logoutButton = createNavButton('LOGOUT', () => {
             if (confirm('Are you sure you want to logout?')) {
-                await clearSession();
+                clearSession();
                 currentView = 'login';
                 renderLoginPanel();
             }
@@ -513,6 +450,7 @@
 
         box.appendChild(buttonContainer);
 
+        // Utility
         function createNavButton(label, onClick) {
             const button = document.createElement('button');
             button.textContent = label;
@@ -548,6 +486,7 @@
             }
         }
 
+        // Autofill utilities
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
         const getTodayGMT8 = () => {
             const now = new Date();
@@ -810,6 +749,7 @@
             await selectDropdownByLabel("KIV/Cold/Invalid/Lost Reason", "Do Not Want INTI (Due to Reputation / Brand)");
         };
 
+        // Render views
         function renderView() {
             if (!isAuthenticated) {
                 renderLoginPanel();
@@ -826,10 +766,11 @@
             } else if (currentView === 'info') {
                 renderInfoView();
             } else {
-                renderLoginPanel();
+                renderLoginPanel(); // Fallback to login if view is invalid
             }
         }
 
+        // Info view with countdown timer
         function renderInfoView() {
             if (!isAuthenticated) {
                 renderLoginPanel();
@@ -854,6 +795,7 @@
 
             layout.appendChild(infoContainer);
 
+            // Start countdown timer
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
@@ -879,11 +821,13 @@
             }
         }
 
+        // HOME (unchanged from original script)
         function renderHomeView() {
             if (!isAuthenticated) {
                 renderLoginPanel();
                 return;
             }
+            // TOP SECTION: "Today's Date"
             const topDateSection = document.createElement('div');
             topDateSection.style.marginBottom = '10px';
 
@@ -919,6 +863,7 @@
 
             layout.appendChild(topDateSection);
 
+            // First Touch + Follow Up
             const sections = [
                 {
                     category: 'First Touch',
@@ -987,6 +932,7 @@
                 }
             ];
 
+            // First 2 categories (First Touch, Follow Up)
             const firstTwoContainer = document.createElement('div');
             firstTwoContainer.style.display = 'grid';
             firstTwoContainer.style.gridTemplateColumns = '1fr 1fr';
@@ -1046,6 +992,7 @@
 
             layout.appendChild(firstTwoContainer);
 
+            // Response
             const responseSection = sections[2];
             const responseContainer = document.createElement('div');
             responseContainer.style.marginTop = '10px';
@@ -1093,6 +1040,7 @@
             responseContainer.appendChild(responseItemContainer);
             layout.appendChild(responseContainer);
 
+            // Remarks
             const remarksSection = sections[3];
             const remarksContainer = document.createElement('div');
             remarksContainer.style.marginTop = '10px';
@@ -1145,6 +1093,7 @@
             remarksContainer.appendChild(remarksItemContainer);
             layout.appendChild(remarksContainer);
 
+            // Old date buttons at bottom, rename section to "Miscellaneous"
             const miscHeader = document.createElement('div');
             miscHeader.textContent = 'Miscellaneous';
             miscHeader.style.fontWeight = 'bold';
@@ -1215,11 +1164,13 @@
             layout.appendChild(btnLastTouch);
         }
 
+        // AUTOFILL (unchanged from original script)
         function renderAutofillView() {
             if (!isAuthenticated) {
                 renderLoginPanel();
                 return;
             }
+            // Set Date
             const setDateSection = document.createElement('div');
             setDateSection.style.marginBottom = '10px';
 
@@ -1289,6 +1240,7 @@
             setDateSection.appendChild(setDateBtn);
             layout.appendChild(setDateSection);
 
+            // First Touch Section
             const firstTouchSection = document.createElement('div');
             firstTouchSection.style.marginTop = '10px';
 
@@ -1340,6 +1292,7 @@
             firstTouchSection.appendChild(firstTouchContainer);
             layout.appendChild(firstTouchSection);
 
+            // Follow Up Section
             const followUpSection = document.createElement('div');
             followUpSection.style.marginTop = '10px';
 
@@ -1383,6 +1336,7 @@
             followUpSection.appendChild(followUpContainer);
             layout.appendChild(followUpSection);
 
+            // Follow Up & To Lost / Invalid
             const lostInvalidSection = document.createElement('div');
             lostInvalidSection.style.marginTop = '10px';
 
@@ -1437,12 +1391,17 @@
             layout.appendChild(lostInvalidSection);
         }
 
-        (async () => {
-            const isValidSession = await checkSession();
-            if (isValidSession) {
-                renderMainUI();
-            } else {
-                renderLoginPanel();
-            }
-        })();
+        // Initial render
+        renderView();
+    }
+
+    // Initialize
+    (async () => {
+        const isValidSession = await checkSession();
+        if (isValidSession) {
+            renderMainUI();
+        } else {
+            renderLoginPanel();
+        }
+    })();
 })();
